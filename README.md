@@ -59,6 +59,13 @@ Game        (координатор)
 - Компилятор C++17: `g++` (GCC 7+) или `clang++`
 - `make` (опционально)
 
+### Скачать через терминал
+
+```bash
+git clone https://github.com/evtushok/transfer-window.git
+cd OOP_Project
+```
+
 ### С Makefile
 ```bash
 make
