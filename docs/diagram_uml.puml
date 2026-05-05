@@ -1,0 +1,246 @@
+@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FEFEFE
+skinparam class {
+    BackgroundColor #E8F4FD
+    BorderColor #2C3E50
+    ArrowColor #2C3E50
+}
+
+' ============================================================================
+' КЛАСС DATE
+' ============================================================================
+class Date {
+    - day: int
+    - month: int
+    - year: int
+    --
+    - isLeapYear(y: int): bool
+    - getDaysInMonth(m: int, y: int): int
+    - toDays(): long
+    --
+    + Date(d: int = 1, m: int = 1, y: int = 2024)
+    + operator++(): Date
+    + operator++(int): Date
+    + addMonths(months: int): Date
+    + operator-(other: Date): long
+    + operator<(other: Date): bool
+    + operator==(other: Date): bool
+    + friend operator<<(os: ostream, d: Date): ostream
+}
+
+' ============================================================================
+' КЛАСС PERSON (АБСТРАКТНЫЙ)
+' ============================================================================
+abstract class Person {
+    # id: int
+    # name: string
+    # age: int
+    --
+    + Person(i: int, n: string, a: int)
+    + {abstract} getInfo(): string
+    + getName(): string
+    + getAge(): int
+    + getId(): int
+    + ~Person()
+}
+
+' ============================================================================
+' КЛАСС AGENT (НАСЛЕДНИК PERSON)
+' ============================================================================
+class Agent {
+    - commission: double
+    --
+    + Agent(i: int, n: string, a: int, c: double)
+    + getInfo(): string
+    + negotiateContract(p: Player*): void
+    + getCommission(): double
+}
+
+' ============================================================================
+' КЛАСС PLAYER (НАСЛЕДНИК PERSON)
+' ============================================================================
+class Player {
+    - position: string
+    - value: double
+    - agent: Agent*
+    - {static} totalPlayers: int
+    --
+    + Player(i: int, n: string, a: int, p: string, v: double, ag: Agent* = nullptr)
+    + Player(const Player& other)
+    + Player(Player&& other)
+    + ~Player()
+    + getInfo(): string
+    + updateMarketValue(v: double): void
+    + operator-(): Player
+    + getValue(): double
+    + getPosition(): string
+    + getAgent(): Agent*
+    + setAgent(a: Agent*): void
+    + {static} getTotalPlayers(): int
+}
+
+' ============================================================================
+' КЛАСС CLUB
+' ============================================================================
+class Club {
+    - clubId: int
+    - name: string
+    - budget: double
+    - squad: vector<Player*>
+    - {static} totalClubs: int
+    --
+    + Club(i: int, n: string, d: double)
+    + ~Club()
+    + addPlayer(p: Player*): void
+    + removePlayer(p: Player*): void
+    + canAfford(amount: double): bool
+    + spend(amount: double): void
+    + receive(amount: double): void
+    + getName(): string
+    + getBudget(): double
+    + getSquad(): vector<Player*>&
+    + showSquad(): void
+    + {static} getTotalClubs(): int
+}
+
+' ============================================================================
+' КЛАСС LOANINFO
+' ============================================================================
+class LoanInfo {
+    + player: Player*
+    + startDate: Date
+    + endDate: Date
+    + fromClub: Club*
+    + durationMonths: int
+    --
+    + LoanInfo(p: Player*, start: Date, months: int, from: Club*)
+    + isExpired(current: Date): bool
+    + getDurationString(): string
+    + isPlayerOnLoan(p: Player*): bool
+}
+
+' ============================================================================
+' КЛАСС TRANSFERWINDOW
+' ============================================================================
+class TransferWindow {
+    - startDate: Date
+    - endDate: Date
+    --
+    + TransferWindow(s: Date, e: Date)
+    + isOpen(d: Date): bool
+    + showStatus(d: Date): void
+}
+
+' ============================================================================
+' КЛАСС UI (СТАТИЧЕСКИЙ — ВЕСЬ ВВОД/ВЫВОД)
+' ============================================================================
+class UI <<static>> {
+    --
+    + {static} safeInput<T>(prompt: string, minVal: T, maxVal: T): T
+    + {static} safeConfirm(prompt: string): bool
+    + {static} showWelcome(): void
+    + {static} showMenu(date: Date, window: TransferWindow*, \n         userClub: Club*, activeLoans: vector<LoanInfo>): void
+    + {static} showAvailablePlayers(freeAgents: vector<Player*>): void
+    + {static} showStats(daysPlayed: int, userClub: Club*, \n         totalEarned: double, totalSpent: double, \n         ownPlayers: vector<Player*>, activeLoans: vector<LoanInfo>): void
+    + {static} selectLoanDuration(): int
+}
+
+' ============================================================================
+' КЛАСС MARKET (СТАТИЧЕСКИЙ — РЫНОЧНЫЕ СОБЫТИЯ)
+' ============================================================================
+class Market <<static>> {
+    --
+    + {static} randomMarketChange(freeAgents: vector<Player*>, \n         ownPlayers: vector<Player*>): void
+    + {static} addDailyIncome(userClub: Club*, totalEarned: double&): void
+    + {static} calculateLoanFee(playerValue: double, months: int): double
+}
+
+' ============================================================================
+' КЛАСС TRANSFERMANAGER (ЛОГИКА ТРАНСФЕРОВ)
+' ============================================================================
+class TransferManager {
+    - userClub: Club*
+    - clubs: vector<Club*>&
+    - freeAgents: vector<Player*>&
+    - activeLoans: vector<LoanInfo>&
+    - totalSpent: double&
+    - totalEarned: double&
+    --
+    + TransferManager(uc: Club*, cl: vector<Club*>&, \n         fa: vector<Player*>&, al: vector<LoanInfo>&, \n         spent: double&, earned: double&)
+    + isPlayerOnLoan(p: Player*): bool
+    + getOwnPlayers(): vector<Player*>
+    + buyPlayer(): void
+    + sellPlayer(): void
+    + loanPlayer(currentDate: Date): void
+    + processExpiredLoans(currentDate: Date): void
+    + randomTransferOffer(): void
+}
+
+' ============================================================================
+' КЛАСС GAME (КООРДИНАТОР)
+' ============================================================================
+class Game {
+    - userClub: Club*
+    - clubs: vector<Club*>
+    - agents: vector<Agent*>
+    - freeAgents: vector<Player*>
+    - activeLoans: vector<LoanInfo>
+    - window: TransferWindow*
+    - currentDate: Date
+    - daysPlayed: int
+    - totalSpent: double
+    - totalEarned: double
+    - transferManager: TransferManager*
+    --
+    + Game()
+    + ~Game()
+    - getOwnPlayers(): vector<Player*>
+    + nextDay(): void
+    + run(): void
+}
+
+' ============================================================================
+' ОТНОШЕНИЯ МЕЖДУ КЛАССАМИ
+' ============================================================================
+
+' Наследование
+Person <|-- Agent
+Person <|-- Player
+
+' Ассоциация: Player хранит указатель на Agent
+Player o--> Agent : has agent
+
+' Club содержит вектор Player*
+Club o--> "0..*" Player : squad
+
+' LoanInfo ссылается на Player и Club
+LoanInfo o--> Player : references
+LoanInfo o--> Club   : fromClub
+
+' LoanInfo использует Date (поля startDate, endDate)
+LoanInfo ..> Date : uses
+
+' TransferWindow использует Date
+TransferWindow ..> Date : uses
+
+' TransferManager управляет трансферами через Club, Player, LoanInfo
+TransferManager --> Club         : operates on
+TransferManager --> "0..*" Player : manages
+TransferManager --> "0..*" LoanInfo : tracks
+TransferManager ..> UI           : calls
+TransferManager ..> Market       : calls
+
+' Game владеет всеми объектами (композиция)
+Game *--> "1" Club            : userClub
+Game *--> "0..*" Club         : clubs
+Game *--> "0..*" Agent        : agents
+Game *--> "0..*" Player       : freeAgents
+Game *--> "0..*" LoanInfo     : activeLoans
+Game *--> "1" TransferWindow  : window
+Game *--> "1" TransferManager : transferManager
+Game ..> Date                 : currentDate
+Game ..> UI                   : calls
+Game ..> Market               : calls
+@enduml
