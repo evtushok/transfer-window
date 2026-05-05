@@ -63,7 +63,7 @@ Game        (координатор)
 
 ```bash
 git clone https://github.com/evtushok/transfer-window.git
-cd OOP_Project
+cd transfer-window
 ```
 
 ### С Makefile
